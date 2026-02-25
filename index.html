@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultra-Precise Vimshottari Dasha Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --space-bg: #0a0b1e;
+            --accent-gold: #f6e05e;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+        body {
+            background-color: var(--space-bg);
+            color: #e2e8f0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-image: radial-gradient(circle at 50% 50%, #1a1c3a 0%, #0a0b1e 100%);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .dasha-level {
+            border-left: 2px solid var(--accent-gold);
+            margin-left: 1rem;
+            padding-left: 1rem;
+        }
+        .active-glow {
+            box-shadow: 0 0 15px rgba(246, 224, 94, 0.3);
+            border: 1px solid var(--accent-gold);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+            stroke: rgba(246, 224, 94, 0.4);
+            stroke-width: 1;
+            fill: none;
+        }
+        .house-label {
+            fill: rgba(246, 224, 94, 0.8);
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .planet-tag {
+            fill: #fff;
+            font-size: 10px;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500 mb-2">
+                Vedic Astro Intelligence
+            </h1>
+            <p class="text-slate-400 font-mono text-sm uppercase tracking-widest">Astronomical Precision Engine v1.2.0</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Column: Inputs & Quick Stats -->
+            <section class="lg:col-span-3 space-y-6">
+                <div class="glass p-6 rounded-2xl">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V7h2v2z"/></svg>
+                        Birth Details
+                    </h2>
+                    <form id="astroForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Birth Date</label>
+                            <input type="date" id="dob" value="1990-01-01" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-yellow-500 outline-none" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Time (HH:MM)</label>
+                                <input type="time" id="tob" value="05:30" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Timezone</label>
+                                <input type="number" id="tzone" step="0.5" value="5.5" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Lat</label>
+                                <input type="number" id="lat" step="0.01" value="28.61" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Lon</label>
+                                <input type="number" id="lon" step="0.01" value="77.20" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white outline-none">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-3 rounded-xl transition-all transform active:scale-95 shadow-lg">
+                            Calculate Chart
+                        </button>
+                    </form>
+
+                    <div id="quickStats" class="mt-8 hidden space-y-3">
+                        <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                            <span class="text-xs text-slate-500 block">Lagna (Ascendant)</span>
+                            <span id="statLagna" class="text-lg font-medium text-yellow-200">-</span>
+                        </div>
+                        <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                            <span class="text-xs text-slate-500 block">Janma Nakshatra</span>
+                            <span id="statNakshatra" class="text-lg font-medium text-yellow-200">-</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Middle Column: Chart Visualization -->
+            <section class="lg:col-span-5">
+                <div class="glass p-6 rounded-2xl min-h-[500px] flex flex-col items-center">
+                    <h3 class="text-xl font-bold mb-6 text-yellow-500 self-start">Lagna Kundali (D1)</h3>
+                    <div id="chartView" class="w-full max-w-[450px]">
+                        <!-- SVG Chart goes here -->
+                        <div id="chartPlaceholder" class="flex flex-col items-center justify-center h-80 opacity-20">
+                            <svg class="w-24 h-24 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13h16M12 4v16m0-8l8 8m-8-8l-8 8M12 12l8-8m-8 8l-8-8"/></svg>
+                            <p>Enter birth data to view chart</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Planets Table -->
+                    <div id="planetTable" class="w-full mt-8 overflow-x-auto hidden">
+                        <table class="w-full text-xs text-left">
+                            <thead class="text-slate-500 uppercase border-b border-slate-800">
+                                <tr>
+                                    <th class="pb-2">Planet</th>
+                                    <th class="pb-2">Rashi</th>
+                                    <th class="pb-2">Degree</th>
+                                    <th class="pb-2">Nakshatra</th>
+                                </tr>
+                            </thead>
+                            <tbody id="planetRows" class="divide-y divide-slate-800/50">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Column: Dasha Timeline -->
+            <section class="lg:col-span-4">
+                <div id="resultsContainer" class="hidden space-y-6 overflow-y-auto max-h-[85vh] pr-2">
+                    <div class="flex items-center justify-between sticky top-0 bg-slate-950/80 backdrop-blur pb-2 z-10">
+                        <h3 class="text-2xl font-bold">Vimshottari Dasha</h3>
+                        <div class="text-[10px] px-2 py-1 bg-yellow-500/10 text-yellow-400 rounded-full border border-yellow-500/20 uppercase">
+                            Maha / Antar
+                        </div>
+                    </div>
+                    <div id="dashaList" class="space-y-3">
+                        <!-- Dynamic Content -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Script Integration -->
+    <script type="module">
+        import { VedicAstroAPI } from './vedic_astro_api.js';
+
+        const form = document.getElementById('astroForm');
+        const chartView = document.getElementById('chartView');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const planetTable = document.getElementById('planetTable');
+
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            
+            const dob = document.getElementById('dob').value;
+            const tob = document.getElementById('tob').value;
+            const tzone = parseFloat(document.getElementById('tzone').value);
+            const lat = parseFloat(document.getElementById('lat').value);
+            const lon = parseFloat(document.getElementById('lon').value);
+
+            const [year, month, day] = dob.split('-').map(Number);
+            const [hour, min] = tob.split(':').map(Number);
+
+            const birthData = { year, month, day, hour, min, sec: 0, tzone, lat, lon };
+
+            try {
+                // Extended Profile with chart data
+                const profile = VedicAstroAPI.getBirthProfile(birthData, 2); 
+                renderApp(profile);
+            } catch (err) {
+                console.error(err);
+                alert("Calculation Error: " + err.message);
+            }
+        };
+
+        function renderApp(profile) {
+            // 1. Show Containers
+            document.getElementById('chartPlaceholder').classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+            planetTable.classList.remove('hidden');
+            document.getElementById('quickStats').classList.remove('hidden');
+
+            // 2. Render Dasha
+            renderDasha(profile);
+
+            // 3. Render Planet Table
+            renderPlanets(profile);
+
+            // 4. Render North Indian Chart
+            renderNorthChart(profile);
+
+            // 5. Update Quick Stats
+            document.getElementById('statNakshatra').textContent = `${profile.astronomy.moonNakshatra} - ${profile.astronomy.moonPada}`;
+            document.getElementById('statLagna').textContent = getRashiName(profile.astronomy.lagnaDegree || 0);
+        }
+
+        function renderDasha(profile) {
+            const dashaList = document.getElementById('dashaList');
+            dashaList.innerHTML = '';
+            profile.dashaTimeline.forEach(md => {
+                const card = createDashaCard(md);
+                dashaList.appendChild(card);
+            });
+        }
+
+        function createDashaCard(node) {
+            const div = document.createElement('div');
+            div.className = 'glass rounded-xl p-4 hover:bg-white/10 transition-colors cursor-pointer';
+            
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="text-[10px] font-bold text-yellow-500 uppercase">${getPlanetSymbol(node.lord)} ${node.lord}</span>
+                        <div class="text-xs text-slate-400 mt-1">${formatDate(node.startJD)} — ${formatDate(node.endJD)}</div>
+                    </div>
+                    <div class="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">
+                        ${(node.durationDays / 365.25).toFixed(1)}y
+                    </div>
+                </div>
+                <div class="sub-dasha-list mt-3 space-y-1 hidden">
+                    ${node.subDashas.map(ad => `
+                        <div class="flex justify-between text-[11px] py-1 border-l border-yellow-500/20 pl-2 ml-1">
+                            <span class="text-slate-300">${ad.lord}</span>
+                            <span class="text-slate-500">${formatDate(ad.startJD)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            div.onclick = () => {
+                const list = div.querySelector('.sub-dasha-list');
+                list.classList.toggle('hidden');
+            };
+
+            return div;
+        }
+
+        function renderPlanets(profile) {
+            const rows = document.getElementById('planetRows');
+            // Simulated planet data for UI demo (In prod, these come from PlanetEngine)
+            const planets = [
+                { name: 'Ascendant', deg: 15.4, rashi: 'Sagittarius', nak: 'Moola' },
+                { name: 'Sun', deg: 10.2, rashi: 'Leo', nak: 'Magha' },
+                { name: 'Moon', deg: profile.astronomy.moonSiderealLongitude % 30, rashi: getRashiName(profile.astronomy.moonSiderealLongitude), nak: profile.astronomy.moonNakshatra },
+                { name: 'Mars', deg: 22.1, rashi: 'Aries', nak: 'Bharani' },
+                { name: 'Mercury', deg: 5.8, rashi: 'Virgo', nak: 'Uttara Ph.' },
+                { name: 'Jupiter', deg: 18.3, rashi: 'Cancer', nak: 'Pushya' },
+                { name: 'Venus', deg: 12.9, rashi: 'Libra', nak: 'Swati' },
+                { name: 'Saturn', deg: 28.5, rashi: 'Capricorn', nak: 'Dhanishta' },
+                { name: 'Rahu', deg: 14.2, rashi: 'Aquarius', nak: 'Shatabhisha' }
+            ];
+
+            rows.innerHTML = planets.map(p => `
+                <tr class="hover:bg-white/5">
+                    <td class="py-2 text-white font-medium">${p.name}</td>
+                    <td class="py-2 text-slate-400">${p.rashi}</td>
+                    <td class="py-2 text-slate-400">${p.deg.toFixed(1)}°</td>
+                    <td class="py-2 text-slate-400">${p.nak}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderNorthChart(profile) {
+            chartView.innerHTML = `
+                <svg viewBox="0 0 400 400" class="chart-svg">
+                    <!-- Outer Square -->
+                    <rect x="10" y="10" width="380" height="380" />
+                    <!-- Diagonals -->
+                    <line x1="10" y1="10" x2="390" y2="390" />
+                    <line x1="390" y1="10" x2="10" y2="390" />
+                    <!-- Inner Diamond -->
+                    <line x1="200" y1="10" x2="10" y2="200" />
+                    <line x1="10" y1="200" x2="200" y2="390" />
+                    <line x1="200" y1="390" x2="390" y2="200" />
+                    <line x1="390" y1="200" x2="200" y2="10" />
+
+                    <!-- House Labels (Static positions for North Indian) -->
+                    <!-- 1st House (Top Center Diamond) -->
+                    <text x="200" y="140" class="house-label" text-anchor="middle">9</text>
+                    <text x="200" y="160" class="planet-tag" text-anchor="middle">As</text>
+
+                    <!-- 2nd House -->
+                    <text x="130" y="70" class="house-label" text-anchor="middle">10</text>
+                    <text x="130" y="90" class="planet-tag" text-anchor="middle">Sa</text>
+
+                    <!-- 4th House -->
+                    <text x="70" y="200" class="house-label" text-anchor="middle">12</text>
+                    
+                    <!-- 7th House -->
+                    <text x="200" y="260" class="house-label" text-anchor="middle">3</text>
+                    
+                    <!-- 10th House -->
+                    <text x="330" y="200" class="house-label" text-anchor="middle">6</text>
+                    <text x="330" y="220" class="planet-tag" text-anchor="middle">Me</text>
+
+                    <text x="200" y="360" class="text-slate-600 italic text-[10px]" text-anchor="middle">Lagna Kundali (D1)</text>
+                </svg>
+            `;
+        }
+
+        function getRashiName(deg) {
+            const rashis = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+            return rashis[Math.floor(deg / 30) % 12];
+        }
+
+        function formatDate(jd) {
+            const date = new Date((jd - 2440587.5) * 86400000);
+            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' });
+        }
+
+        function getPlanetSymbol(lord) {
+            const symbols = { "Ketu": "Ke", "Venus": "Ve", "Sun": "Su", "Moon": "Mo", "Mars": "Ma", "Rahu": "Ra", "Jupiter": "Ju", "Saturn": "Sa", "Mercury": "Me" };
+            return symbols[lord] || "";
+        }
+    </script>
+</body>
+</html>
