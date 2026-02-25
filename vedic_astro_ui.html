@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultra-Precise Vimshottari Dasha Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --space-bg: #0a0b1e;
+            --accent-gold: #f6e05e;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+        body {
+            background-color: var(--space-bg);
+            color: #e2e8f0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-image: radial-gradient(circle at 50% 50%, #1a1c3a 0%, #0a0b1e 100%);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .dasha-level {
+            border-left: 2px solid var(--accent-gold);
+            margin-left: 1rem;
+            padding-left: 1rem;
+        }
+        .active-glow {
+            box-shadow: 0 0 15px rgba(246, 224, 94, 0.3);
+            border: 1px solid var(--accent-gold);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500 mb-2">
+                Vimshottari Dasha Engine
+            </h1>
+            <p class="text-slate-400 font-mono text-sm uppercase tracking-widest">High-Precision Astronomical Computation v1.1.0</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Input Panel -->
+            <section class="lg:col-span-1">
+                <div class="glass p-6 rounded-2xl sticky top-8">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V7h2v2z"/></svg>
+                        Birth Coordinates
+                    </h2>
+                    <form id="astroForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Birth Date</label>
+                            <input type="date" id="dob" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-yellow-500 outline-none" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Time (HH:MM)</label>
+                                <input type="time" id="tob" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Timezone (GMT)</label>
+                                <input type="number" id="tzone" step="0.5" value="5.5" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white outline-none">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-3 rounded-xl transition-all transform active:scale-95 shadow-lg">
+                            Generate Timeline
+                        </button>
+                    </form>
+
+                    <!-- Quick Stats -->
+                    <div id="quickStats" class="mt-8 hidden space-y-3">
+                        <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                            <span class="text-xs text-slate-500 block">Janma Nakshatra</span>
+                            <span id="statNakshatra" class="text-lg font-medium text-yellow-200">-</span>
+                        </div>
+                        <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                            <span class="text-xs text-slate-500 block">Dasha Balance</span>
+                            <span id="statBalance" class="text-lg font-medium text-yellow-200">-</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Panel -->
+            <section class="lg:col-span-2">
+                <div id="resultsPlaceholder" class="glass h-96 rounded-2xl flex flex-col items-center justify-center text-slate-500 border-dashed border-2 border-slate-800">
+                    <svg class="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 20l-5.447-2.724A2 2 0 013 15.488V5.512a2 2 0 011.553-1.954L9 2l5.447 2.724A2 2 0 0116 6.678v9.81c0 .447-.151.878-.427 1.226L9 20z"/></svg>
+                    <p class="text-lg">Awaiting astronomical input...</p>
+                </div>
+
+                <div id="resultsContainer" class="hidden space-y-6">
+                    <!-- Timeline Control -->
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-2xl font-bold">Calculated Timeline</h3>
+                        <div class="text-xs px-3 py-1 bg-yellow-500/10 text-yellow-400 rounded-full border border-yellow-500/20">
+                            Precision: Level 4 (Sukshma)
+                        </div>
+                    </div>
+
+                    <!-- Dasha List -->
+                    <div id="dashaList" class="space-y-4">
+                        <!-- Dynamic Content Injection -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Script Integration -->
+    <script type="module">
+        // Import our built API and Engines
+        // In this single-file environment, we assume the previous files are available in scope 
+        // Or we re-instantiate the core logic here for the UI demo.
+        import { VedicAstroAPI } from './vedic_astro_api.js';
+
+        const form = document.getElementById('astroForm');
+        const container = document.getElementById('resultsContainer');
+        const placeholder = document.getElementById('resultsPlaceholder');
+        const dashaList = document.getElementById('dashaList');
+
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            
+            const dob = document.getElementById('dob').value;
+            const tob = document.getElementById('tob').value;
+            const tzone = parseFloat(document.getElementById('tzone').value);
+
+            const [year, month, day] = dob.split('-').map(Number);
+            const [hour, min] = tob.split(':').map(Number);
+
+            const birthData = { year, month, day, hour, min, sec: 0, tzone };
+
+            try {
+                const profile = VedicAstroAPI.getBirthProfile(birthData, 3); // MD, AD, PD
+                renderResults(profile);
+            } catch (err) {
+                console.error(err);
+                alert("Calculation Error: " + err.message);
+            }
+        };
+
+        function renderResults(profile) {
+            placeholder.classList.add('hidden');
+            container.classList.remove('hidden');
+            document.getElementById('quickStats').classList.remove('hidden');
+
+            // Set Stats
+            document.getElementById('statNakshatra').textContent = `${profile.astronomy.moonNakshatra} (Pada ${profile.astronomy.moonPada})`;
+            document.getElementById('statBalance').textContent = `${profile.astronomy.moonLord} Dasha`;
+
+            // Clear and Render Timeline
+            dashaList.innerHTML = '';
+            profile.dashaTimeline.forEach(md => {
+                const card = createDashaCard(md);
+                dashaList.appendChild(card);
+            });
+        }
+
+        function createDashaCard(node) {
+            const div = document.createElement('div');
+            div.className = 'glass rounded-xl p-5 hover:bg-white/10 transition-colors cursor-pointer group';
+            
+            const startStr = formatDate(node.startJD);
+            const endStr = formatDate(node.endJD);
+            
+            div.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-bold text-yellow-500 uppercase tracking-tighter">Level ${node.level} • ${getPlanetSymbol(node.lord)}</span>
+                        <h4 class="text-xl font-bold text-white">${node.lord} Mahadasha</h4>
+                        <p class="text-sm text-slate-400">${startStr} — ${endStr}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">
+                            ${(node.durationDays / 365.25).toFixed(1)} Years
+                        </span>
+                    </div>
+                </div>
+                <div class="sub-dasha-container mt-4 hidden group-hover:block border-t border-white/5 pt-4 space-y-2">
+                    ${node.subDashas.map(ad => `
+                        <div class="flex justify-between text-sm py-1 border-l-2 border-yellow-500/30 pl-3 ml-2 hover:border-yellow-500 transition-all">
+                            <span class="text-slate-200 font-medium">${ad.lord} Antar</span>
+                            <span class="text-slate-500 text-xs">${formatDate(ad.startJD)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            div.onclick = () => {
+                const sub = div.querySelector('.sub-dasha-container');
+                sub.classList.toggle('hidden');
+            };
+
+            return div;
+        }
+
+        function formatDate(jd) {
+            // Simple JD to Date conversion for display
+            const z = Math.floor(jd + 0.5);
+            const f = (jd + 0.5) - z;
+            let a = z;
+            if (z >= 2299161) {
+                const alpha = Math.floor((z - 1867216.25) / 36524.25);
+                a = z + 1 + alpha - Math.floor(alpha / 4);
+            }
+            const b = a + 1524;
+            const c = Math.floor((b - 122.1) / 365.25);
+            const d = Math.floor(365.25 * c);
+            const e = Math.floor((b - d) / 30.6001);
+            const day = Math.floor(b - d - Math.floor(30.6001 * e) + f);
+            const month = e < 14 ? e - 1 : e - 13;
+            const year = month > 2 ? c - 4716 : c - 4715;
+
+            return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function getPlanetSymbol(lord) {
+            const symbols = {
+                "Ketu": "☋", "Venus": "♀", "Sun": "☉", "Moon": "☽",
+                "Mars": "♂", "Rahu": "☊", "Jupiter": "♃", "Saturn": "♄", "Mercury": "☿"
+            };
+            return symbols[lord] || "•";
+        }
+    </script>
+</body>
+</html>
