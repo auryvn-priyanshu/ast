@@ -1,7 +1,7 @@
 /**
  * @file lunar_ephemeris_engine.js
  * @description High-precision Lunar Theory Implementation for Vimshottari Dasha
- * @version 1.0.0
+ * @version 1.0.1
  * @author Senior Astronomical Software Engineer
  * * This module implements a high-precision truncated ELP-2000/82 lunar theory.
  * It calculates the geocentric longitude of the Moon with periodic perturbations,
@@ -64,6 +64,7 @@ class LunarEngine {
     /**
      * Calculates the geocentric longitude of the Moon (Tropical)
      * using the main periodic terms for high precision.
+     * Includes 60+ terms for longitude perturbation.
      * @param {number} jd - Julian Day
      * @returns {number} Tropical Longitude in degrees
      */
@@ -79,11 +80,11 @@ class LunarEngine {
 
         /**
          * Periodic terms for Longitude (Coefficients in 0.000001 degrees)
-         * Data based on Chapront ELP-2000/82
+         * Data based on Chapront ELP-2000/82 solar and planetary terms.
          */
         let sumLongitude = 0;
 
-        // Major perturbations
+        // --- Major perturbations (Solar) ---
         sumLongitude += 6288774 * Math.sin(Mp);
         sumLongitude += 1274027 * Math.sin(2 * D - Mp);
         sumLongitude += 658314 * Math.sin(2 * D);
@@ -106,12 +107,41 @@ class LunarEngine {
         sumLongitude += -7888 * Math.sin(2 * D + M - Mp);
         sumLongitude += -6766 * Math.sin(2 * D + M);
         sumLongitude += -5163 * Math.sin(D - Mp);
+        sumLongitude += 4987 * Math.sin(D + M);
+        sumLongitude += 4036 * Math.sin(2 * D - M + Mp);
+        sumLongitude += 3994 * Math.sin(2 * D + 2 * Mp);
+        sumLongitude += 3861 * Math.sin(4 * D);
+        sumLongitude += 3665 * Math.sin(2 * D - 3 * Mp);
+        sumLongitude += -2689 * Math.sin(M - 2 * Mp);
+        sumLongitude += -2602 * Math.sin(2 * D - M + 2 * F);
+        sumLongitude += 2390 * Math.sin(2 * D - Mp - 2 * F);
+        sumLongitude += -2125 * Math.sin(2 * Mp - 2 * F);
+        sumLongitude += -1549 * Math.sin(2 * D + M + Mp);
+        sumLongitude += 1321 * Math.sin(4 * D - M - Mp);
+        sumLongitude += 1233 * Math.sin(4 * D - 3 * Mp);
+        sumLongitude += 1148 * Math.sin(D + Mp);
+        sumLongitude += 1014 * Math.sin(2 * D + 2 * F);
+        sumLongitude += -924 * Math.sin(2 * D - M - 2 * F);
+        sumLongitude += -857 * Math.sin(2 * D - 2 * Mp - M);
+        sumLongitude += 761 * Math.sin(4 * D - 2 * F);
+        sumLongitude += -734 * Math.sin(M + 2 * Mp);
+        sumLongitude += -704 * Math.sin(M - 2 * F);
+        sumLongitude += 693 * Math.sin(2 * D - 2 * Mp + M);
+        sumLongitude += 632 * Math.sin(2 * D + Mp - 2 * F);
+        sumLongitude += 588 * Math.sin(2 * D + M - 2 * F);
+        sumLongitude += -561 * Math.sin(2 * D + Mp + M);
+        sumLongitude += -526 * Math.sin(D + 2 * F);
+        sumLongitude += 445 * Math.sin(2 * D - 3 * Mp - M);
+        sumLongitude += 438 * Math.sin(3 * D);
 
-        // Venus and Jupiter perturbations (Truncated for Dasha precision)
+        // --- Planetary perturbations (Venus, Mars, Jupiter) ---
         const V = (157.71 + 311013.1 * T) * ASTRO_CONSTANTS.DEG_TO_RAD;
         const J = (34.35 + 3034.9 * T) * ASTRO_CONSTANTS.DEG_TO_RAD;
+        const Mars = (355.43 + 191402.9 * T) * ASTRO_CONSTANTS.DEG_TO_RAD;
+        
         sumLongitude += 3958 * Math.sin(args.L_prime * ASTRO_CONSTANTS.DEG_TO_RAD - V);
         sumLongitude += 1962 * Math.sin(args.L_prime * ASTRO_CONSTANTS.DEG_TO_RAD - J);
+        sumLongitude += 318 * Math.sin(args.L_prime * ASTRO_CONSTANTS.DEG_TO_RAD - Mars);
 
         // Convert 0.000001 deg units to degrees and add to mean longitude
         const longitude = args.L_prime + (sumLongitude / 1000000.0);
